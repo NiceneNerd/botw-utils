@@ -1,7 +1,7 @@
 """ Provides hash tables for unmodified game files using xxHash """
 from json import loads
 from functools import lru_cache
-from typing import ByteString, Dict, List, Union
+from typing import ByteString, Dict, Iterator, List, Union
 from xxhash import xxh32_intdigest
 
 from oead.yaz0 import decompress
@@ -42,6 +42,17 @@ class HashTable:
         data: Union[ByteString, int],
         flag_new: bool = True
     ) -> bool:
+        """Checks a file to see if it has been modified. Note that this automatically decompresses yaz0 data.
+
+        :param file_name: The canonical resource path of the file to check
+        :type file_name: str
+        :param data: Either the file data (as a byteslike object) or an xxh32 hash as an int
+        :type data: Union[byteslike, int]
+        :param flag_new: Whether to flag new files (not in vanilla BOTW) as modified, defaults to True
+        :type flag_new: bool
+        :returns: Returns whether the file's hash matches a known version of the hash for the original version.
+        :rtype: bool
+        """
         if file_name not in self._table:
             return flag_new
         else:
@@ -53,3 +64,20 @@ class HashTable:
                 xhash = xxh32_intdigest(data)
             return xhash in self._table[file_name]
 
+    @lru_cache(None)
+    def is_file_new(self, file_name: str) -> bool:
+        """ Checks if a file is present in the unmodded game.
+        :param file_name: The canonical resource path of the file to check
+        :type file_name: str
+        :returns: Returns True if the file is present in the stock hash table.
+        :rtype: bool
+        """
+        return file_name in self._table
+
+    def get_stock_files(self) -> Iterator[str]:
+        """ Iterates the files in the stock hash table by their canonical resource paths
+        :returns: Iterator for stock files in hash table
+        :rtype: Iterator[str]
+        """
+        for file in self._table.keys():
+            yield file
