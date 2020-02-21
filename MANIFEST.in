@@ -1,0 +1,2 @@
+recursive-include botw *
+recursive-exclude botw/__pycache__ *

@@ -29,11 +29,17 @@ def get_switch_hash_table() -> Dict[str, List[int]]:
     """ 
     return loads((DATA_DIR / 'switch_hashes.json').read_text('utf-8'))
 
-class HashTable:
+class StockHashTable:
+    """ A class wrapping a hash table for stock BOTW files with a few
+    convenience methods. """
     _table: Dict[str, List[int]]
 
     def __init__(self, wiiu: bool):
-        self._table = get_wiiu_hash_table() if wiiu else get_switch_hash_table()
+        table = get_wiiu_hash_table() if wiiu else get_switch_hash_table()
+        self._table = {
+            file: set(xhashes) for file, xhashes in table.items()
+        }
+        del table
 
     @lru_cache(None)
     def is_file_modded(
@@ -57,12 +63,10 @@ class HashTable:
             return flag_new
         else:
             if isinstance(data, int):
-                xhash = data
-            else:
-                if data[0:4] == b'Yaz0':
-                    data = decompress(data)
-                xhash = xxh32_intdigest(data)
-            return xhash in self._table[file_name]
+                return data not in self._table[file_name]
+            if data[0:4] == b'Yaz0':
+                data = decompress(data)
+            return xxh32_intdigest(data) not in self._table[file_name]
 
     @lru_cache(None)
     def is_file_new(self, file_name: str) -> bool:
@@ -75,9 +79,18 @@ class HashTable:
         return file_name in self._table
 
     def get_stock_files(self) -> Iterator[str]:
-        """ Iterates the files in the stock hash table by their canonical resource paths
+        """ Iterates the files in the stock hash table by their canonical
+        resource paths.
         :returns: Iterator for stock files in hash table
         :rtype: Iterator[str]
         """
-        for file in self._table.keys():
+        for file in self._table:
             yield file
+
+    def list_stock_files(self) -> List[str]:
+        """ Lists all of the files in the stock hash table by their canonical
+        resource paths.
+        :returns: List of stock files in hash table
+        :rtype: List[str]
+        """
+        return list(self._table.keys())
