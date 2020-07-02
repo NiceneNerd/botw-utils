@@ -1,4 +1,17 @@
-""" Contains sets representing file extensions used by BOTW for SARC, AAMP, and BYML files """
+""" Contains sets representing file extensions used by BOTW for SARC, AAMP, and BYML files
+
+.. data:: SARC_EXTS
+
+    Set of known file extensions for SARC files
+
+.. data:: AAMP_EXTS
+
+    Set of known file extensions for AAMP files
+
+.. data:: BYML_EXTS
+
+    Set of known file extensions for BYML files
+"""
 
 SARC_EXTS = {'.sarc', '.pack', '.bactorpack', '.bmodelsh', '.beventpack', '.stera', '.stats',
              '.ssarc', '.spack', '.sbactorpack', '.sbmodelsh', '.sbeventpack', '.sstera', '.sstats',

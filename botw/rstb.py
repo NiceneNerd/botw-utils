@@ -4,15 +4,20 @@ from typing import Union
 
 from oead import yaz0
 
+
 def guess_bfres_size(file: Union[Path, bytes], name: str = '') -> int:
-    """ Attempts to estimate a valid RSTB value for a BFRES file. Will decompress first if yaz0 encoded.
-    
-    :param file: The file to analyze, either as a Path or bytes.
-    :type file: Union[str, bytes]
-    :param name: The name of the BFRES file, used to detect type when there is no path. Defaults to empty string.
-    :type name: (Optional) str
-    :returns: Returns an estimated RSTB value.
-    :rtype: int
+    """Attempts to estimate a valid RSTB value for a BFRES file. Decompresses first if yaz0 encoded.
+
+    Args:
+        file (Union[Path, bytes]): The file to analyze, either as a Path or bytes.
+        name (str, optional): The name of the BFRES file, used to detect type when there is no path.
+            Defaults to empty string.
+
+    Raises:
+        ValueError: Raises error if BFRES name is blank when passing file as bytes
+
+    Returns:
+        int: Return an estimated RSTB value
     """
     if isinstance(file, bytes):
         if file[0:4] == b'Yaz0':
@@ -22,8 +27,8 @@ def guess_bfres_size(file: Union[Path, bytes], name: str = '') -> int:
         del file
     else:
         if file.suffix.startswith('.s'):
-            with file.open('rb') as f:
-                real_size = yaz0.get_header(f.read(16)).uncompressed_size
+            with file.open('rb') as opened:
+                real_size = yaz0.get_header(opened.read(16)).uncompressed_size
         else:
             real_size = file.stat().st_size
     if name == '':
@@ -98,22 +103,26 @@ def guess_bfres_size(file: Union[Path, bytes], name: str = '') -> int:
 
 
 def guess_aamp_size(file: Union[Path, bytes], ext: str = '') -> int:
-    """ Attempts to estimate a valid RSTB value for an AAMP file. Will decompress first if yaz0 encoded.
-    
-    :param file: The file to analyze, either as a Path or bytes.
-    :type file: Union[str, bytes]
-    :param ext: The extension of the AAMP file, used to detect type when there is no path. Defaults to empty string.
-    :type ext: (Optional) str
-    :returns: Returns an estimated RSTB value, or 0 for unsupported AAMP types.
-    :rtype: int
+    """Attempts to estimate a valid RSTB value for an AAMP file. Decompresses first if yaz0 encoded.
+
+    Args:
+        file (Union[Path, bytes]): The file to analyze, either as a Path or bytes.
+        ext (str, optional): The extension of the AAMP file, used to detect type when there is no
+            path. Defaults to empty string.
+
+    Raises:
+        ValueError: Raises error if extension is blank when passing file as bytes
+
+    Returns:
+        int: Returns an estimated RSTB value, or 0 for unsupported AAMP types.
     """
     if isinstance(file, bytes):
         real_size = len(file)
         del file
     else:
         if file.suffix.startswith('.s'):
-            with file.open('rb') as f:
-                real_size = yaz0.get_header(f.read(16)).uncompressed_size
+            with file.open('rb') as opened:
+                real_size = yaz0.get_header(opened.read(16)).uncompressed_size
         else:
             real_size = file.stat().st_size
     real_size = int(real_size * 1.05)
