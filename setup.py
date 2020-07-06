@@ -22,5 +22,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3 :: Only",
     ],
     python_requires='>=3.6',
-    install_requires = ["xxhash >= 1.4"]
+    install_requires = [
+        "xxhash >= 1.4",
+        "oead >= 1.0.0"
+    ]
 )
