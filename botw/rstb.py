@@ -42,7 +42,7 @@ class BfresSizeGuesser:
                 range(600_000, 1_000_000): 1.95,
                 range(1_000_000, 1_500_000): 1.85,
                 range(1_500_000, 3_000_000): 1.66,
-                range(3_000_000, sys.maxsize): 1.45
+                range(3_000_000, sys.maxsize): 1.45,
             },
         },
         False: {  # Little-Endian
@@ -61,7 +61,7 @@ class BfresSizeGuesser:
                 range(800_000, 2_000_000): 3.15,
                 range(2_000_000, 3_000_000): 2.5,
                 range(3_000_000, 4_000_000): 1.667,
-                range(4_000_000, sys.maxsize): 1.5
+                range(4_000_000, sys.maxsize): 1.5,
             },
         },
     }
@@ -77,7 +77,7 @@ class BfresSizeGuesser:
 
 class AampSizeGuesser:
     multiplier_map = {
-        '.baiprog': {
+        ".baiprog": {
             range(0, 380): 7.0,
             range(380, 400): 6.0,
             range(400, 450): 5.5,
@@ -86,7 +86,7 @@ class AampSizeGuesser:
             range(1_000, 1_750): 3.5,
             range(1_750, sys.maxsize): 3.0,
         },
-        '.bas': {
+        ".bas": {
             range(0, 100): 20.0,
             range(100, 200): 12.5,
             range(200, 300): 10.0,
@@ -96,7 +96,7 @@ class AampSizeGuesser:
             range(2_000, 15_000): 5.0,
             range(15_000, sys.maxsize): 4.5,
         },
-        '.baslist': {
+        ".baslist": {
             range(0, 100): 15.0,
             range(100, 200): 10.0,
             range(200, 300): 8.0,
@@ -105,50 +105,50 @@ class AampSizeGuesser:
             range(800, 4_000): 4.0,
             range(4_000, sys.maxsize): 3.5,
         },
-        '.bdrop': {
+        ".bdrop": {
             range(0, 200): 8.5,
             range(200, 250): 7.0,
             range(250, 350): 6.0,
             range(350, 450): 5.25,
             range(450, 850): 4.5,
-            range(850, sys.maxsize): 4.0
+            range(850, sys.maxsize): 4.0,
         },
-        '.bgparamlist': {
+        ".bgparamlist": {
             range(0, 100): 20.0,
             range(100, 150): 12.0,
             range(150, 250): 10.0,
             range(250, 350): 8.0,
             range(350, 450): 7.0,
-            range(450, sys.maxsize): 6.0
+            range(450, sys.maxsize): 6.0,
         },
-        '.brecipe': {
+        ".brecipe": {
             range(0, 100): 12.5,
             range(100, 160): 8.5,
             range(160, 200): 7.5,
             range(200, 215): 7.0,
             range(215, sys.maxsize): 6.5,
         },
-        '.bshop': {
+        ".bshop": {
             range(0, 200): 7.25,
             range(200, 400): 6.0,
             range(400, 500): 5.0,
-            range(500, sys.maxsize): 4.05
+            range(500, sys.maxsize): 4.05,
         },
-        '.bxml': {
+        ".bxml": {
             range(0, 350): 6.0,
             range(350, 450): 5.0,
             range(450, 550): 4.5,
             range(550, 650): 4.0,
             range(650, 800): 3.5,
-            range(800, sys.maxsize): 3.0
-        }
+            range(800, sys.maxsize): 3.0,
+        },
     }
 
     @classmethod
     def guess(cls, be: bool, ext: str, size: int):
         size *= 1.05
 
-        if ext == '.bas':
+        if ext == ".bas":
             size *= 1.05  # I guess?
 
         if ext in cls.multiplier_map:
@@ -159,10 +159,12 @@ class AampSizeGuesser:
             else:
                 raise NotImplementedError("Cannot happen ever lol")
 
-        elif ext == '.bdmgparam':
+        elif ext == ".bdmgparam":
             ret = (((-0.0018 * size) + 6.6273) * size) + 500
-        elif ext == '.bphysics':
-            ret = (((int(size) + 32) & -32) + 0x4E + 0x324) * max(4 * math.floor(size / 1388), 3)
+        elif ext == ".bphysics":
+            ret = (((int(size) + 32) & -32) + 0x4E + 0x324) * max(
+                4 * math.floor(size / 1388), 3
+            )
         else:
             ret = 0
 
@@ -184,17 +186,25 @@ def guess_bfres_size(file: Union[Path, bytes], be: bool, name: Optional[str]) ->
         int: Return an estimated RSTB value
     """
     if isinstance(file, bytes):
-        real_size = yaz0.get_header(file[0:16]).uncompressed_size if file[:4] == b"Yaz0" else len(file)
+        real_size = (
+            yaz0.get_header(file[0:16]).uncompressed_size
+            if file[:4] == b"Yaz0"
+            else len(file)
+        )
     elif isinstance(file, Path):
         name = file.name if not name else name
-        with file.open('rb') as f:
+        with file.open("rb") as f:
             chunk = f.read(16)
-            real_size = yaz0.get_header(chunk).uncompressed_size if chunk[:4] == b"Yaz0" else file.stat().st_size
+            real_size = (
+                yaz0.get_header(chunk).uncompressed_size
+                if chunk[:4] == b"Yaz0"
+                else file.stat().st_size
+            )
     else:
         raise NotImplementedError()
 
     if not name:
-        raise ValueError('BFRES name must not be blank if passing file as bytes.')
+        raise ValueError("BFRES name must not be blank if passing file as bytes.")
 
     return int(BfresSizeGuesser.guess(be, ".Tex" in name, real_size))
 
@@ -214,16 +224,24 @@ def guess_aamp_size(file: Union[Path, bytes], be: bool, ext: Optional[str]) -> i
         int: Returns an estimated RSTB value, or 0 for unsupported AAMP types.
     """
     if isinstance(file, bytes):
-        real_size = yaz0.get_header(file[0:16]).uncompressed_size if file[:4] == b"Yaz0" else len(file)
+        real_size = (
+            yaz0.get_header(file[0:16]).uncompressed_size
+            if file[:4] == b"Yaz0"
+            else len(file)
+        )
     elif isinstance(file, Path):
         ext = file.name if not ext else ext
-        with file.open('rb') as f:
+        with file.open("rb") as f:
             chunk = f.read(16)
-            real_size = yaz0.get_header(chunk).uncompressed_size if chunk[:4] == b"Yaz0" else file.stat().st_size
+            real_size = (
+                yaz0.get_header(chunk).uncompressed_size
+                if chunk[:4] == b"Yaz0"
+                else file.stat().st_size
+            )
     else:
         raise NotImplementedError()
 
     if not ext:
-        raise ValueError('AAMP extension must not be blank if passing file as bytes.')
+        raise ValueError("AAMP extension must not be blank if passing file as bytes.")
 
     return int(AampSizeGuesser.guess(be, ext, real_size))

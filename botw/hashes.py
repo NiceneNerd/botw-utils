@@ -18,7 +18,7 @@ def get_wiiu_hash_table() -> Dict[str, List[int]]:
     modified content, including dirty versions affected by automatic processing
     through libraries and tools.
     """
-    return loads((DATA_DIR / 'wiiu_hashes.json').read_text('utf-8'))
+    return loads((DATA_DIR / "wiiu_hashes.json").read_text("utf-8"))
 
 
 @lru_cache(None)
@@ -30,27 +30,23 @@ def get_switch_hash_table() -> Dict[str, List[int]]:
     modified content, including dirty versions affected by automatic processing
     through libraries and tools.
     """
-    return loads((DATA_DIR / 'switch_hashes.json').read_text('utf-8'))
+    return loads((DATA_DIR / "switch_hashes.json").read_text("utf-8"))
 
 
 class StockHashTable:
     """ A class wrapping a hash table for stock BOTW files with a few
     convenience methods. """
+
     _table: Dict[str, List[int]]
 
     def __init__(self, wiiu: bool):
         table = get_wiiu_hash_table() if wiiu else get_switch_hash_table()
-        self._table = {
-            file: set(xhashes) for file, xhashes in table.items()
-        }
+        self._table = {file: set(xhashes) for file, xhashes in table.items()}
         del table
 
     @lru_cache(None)
     def is_file_modded(
-        self,
-        file_name: str,
-        data: Union[ByteString, int],
-        flag_new: bool = True
+        self, file_name: str, data: Union[ByteString, int], flag_new: bool = True
     ) -> bool:
         """Checks a file to see if it has been modified. Automatically decompresses yaz0 data.
 
@@ -70,7 +66,7 @@ class StockHashTable:
         else:
             if isinstance(data, int):
                 return data not in self._table[file_name]
-            if data[0:4] == b'Yaz0':
+            if data[0:4] == b"Yaz0":
                 data = decompress(data)
             return xxh32_intdigest(data) not in self._table[file_name]
 
