@@ -1,17 +1,181 @@
 """ Functions to estimate RSTB values for complex file types """
+import math
+import sys
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 from oead import yaz0
 
 
-def guess_bfres_size(file: Union[Path, bytes], name: str = '') -> int:
+class BfresSizeGuesser:
+    multiplier_map = {
+        True: {  # Big-Endian
+            True: {  # Tex
+                range(0, 100): 9.0,
+                range(100, 2_000): 7.0,
+                range(2_000, 3_000): 5.0,
+                range(3_000, 4_000): 4.0,
+                range(4_000, 8_500): 3.0,
+                range(8_500, 12_000): 2.0,
+                range(12_000, 17_000): 1.75,
+                range(17_000, 30_000): 1.5,
+                range(30_000, 45_000): 1.3,
+                range(45_000, 100_000): 1.2,
+                range(100_000, 150_000): 1.1,
+                range(150_000, 200_000): 1.07,
+                range(200_000, 250_000): 1.045,
+                range(250_000, 300_000): 1.035,
+                range(300_000, 600_000): 1.03,
+                range(600_000, 1_000_000): 1.015,
+                range(1_000_000, 1_800_000): 1.009,
+                range(1_800_000, 4_500_000): 1.005,
+                range(4_500_000, 6_000_000): 1.002,
+                range(6_000_000, sys.maxsize): 1.0015,
+            },
+            False: {  # Model
+                range(0, 500): 7.0,
+                range(500, 750): 5.0,
+                range(750, 1_250): 4.0,
+                range(1_250, 2_000): 3.5,
+                range(2_000, 400_000): 2.25,
+                range(400_000, 600_000): 2.1,
+                range(600_000, 1_000_000): 1.95,
+                range(1_000_000, 1_500_000): 1.85,
+                range(1_500_000, 3_000_000): 1.66,
+                range(3_000_000, sys.maxsize): 1.45
+            },
+        },
+        False: {  # Little-Endian
+            True: {  # Tex
+                range(0, 10_000): 2.0,
+                range(10_000, 30_000): 1.5,
+                range(30_000, 50_000): 1.3,
+                range(50_000, sys.maxsize): 1.2,
+            },
+            False: {  # Model
+                range(0, 1_250): 9.5,
+                range(1_250, 2_500): 6.0,
+                range(2_500, 50_000): 4.25,
+                range(50_000, 100_000): 3.66,
+                range(100_000, 800_000): 3.5,
+                range(800_000, 2_000_000): 3.15,
+                range(2_000_000, 3_000_000): 2.5,
+                range(3_000_000, 4_000_000): 1.667,
+                range(4_000_000, sys.maxsize): 1.5
+            },
+        },
+    }
+
+    @classmethod
+    def guess(cls, be: bool, tex: bool, size: int):
+        size *= 1.05
+
+        for k, v in cls.multiplier_map[be][tex].items():
+            if size in k:
+                return size * v
+
+
+class AampSizeGuesser:
+    multiplier_map = {
+        '.baiprog': {
+            range(0, 380): 7.0,
+            range(380, 400): 6.0,
+            range(400, 450): 5.5,
+            range(450, 600): 5.0,
+            range(600, 1_000): 4.0,
+            range(1_000, 1_750): 3.5,
+            range(1_750, sys.maxsize): 3.0,
+        },
+        '.bas': {
+            range(0, 100): 20.0,
+            range(100, 200): 12.5,
+            range(200, 300): 10.0,
+            range(300, 600): 8.0,
+            range(600, 1_500): 6.0,
+            range(1_500, 2_000): 5.5,
+            range(2_000, 15_000): 5.0,
+            range(15_000, sys.maxsize): 4.5,
+        },
+        '.baslist': {
+            range(0, 100): 15.0,
+            range(100, 200): 10.0,
+            range(200, 300): 8.0,
+            range(300, 500): 6.0,
+            range(500, 800): 5.0,
+            range(800, 4_000): 4.0,
+            range(4_000, sys.maxsize): 3.5,
+        },
+        '.bdrop': {
+            range(0, 200): 8.5,
+            range(200, 250): 7.0,
+            range(250, 350): 6.0,
+            range(350, 450): 5.25,
+            range(450, 850): 4.5,
+            range(850, sys.maxsize): 4.0
+        },
+        '.bgparamlist': {
+            range(0, 100): 20.0,
+            range(100, 150): 12.0,
+            range(150, 250): 10.0,
+            range(250, 350): 8.0,
+            range(350, 450): 7.0,
+            range(450, sys.maxsize): 6.0
+        },
+        '.brecipe': {
+            range(0, 100): 12.5,
+            range(100, 160): 8.5,
+            range(160, 200): 7.5,
+            range(200, 215): 7.0,
+            range(215, sys.maxsize): 6.5,
+        },
+        '.bshop': {
+            range(0, 200): 7.25,
+            range(200, 400): 6.0,
+            range(400, 500): 5.0,
+            range(500, sys.maxsize): 4.05
+        },
+        '.bxml': {
+            range(0, 350): 6.0,
+            range(350, 450): 5.0,
+            range(450, 550): 4.5,
+            range(550, 650): 4.0,
+            range(650, 800): 3.5,
+            range(800, sys.maxsize): 3.0
+        }
+    }
+
+    @classmethod
+    def guess(cls, be: bool, ext: str, size: int):
+        size *= 1.05
+
+        if ext == '.bas':
+            size *= 1.05  # I guess?
+
+        if ext in cls.multiplier_map:
+            for k, v in cls.multiplier_map[ext].items():
+                if size in k:
+                    ret = size * v
+                    break
+            else:
+                raise NotImplementedError("Cannot happen ever lol")
+
+        elif ext == '.bdmgparam':
+            ret = (((-0.0018 * size) + 6.6273) * size) + 500
+        elif ext == '.bphysics':
+            ret = (((int(size) + 32) & -32) + 0x4E + 0x324) * max(4 * math.floor(size / 1388), 3)
+        else:
+            ret = 0
+
+        return int(ret * 1.5 if not be else ret)
+
+
+def guess_bfres_size(file: Union[Path, bytes], be: bool, name: Optional[str]) -> int:
     """Attempts to estimate a valid RSTB value for a BFRES file. Decompresses first if yaz0 encoded.
 
     Args:
         file (Union[Path, bytes]): The file to analyze, either as a Path or bytes.
-        name (str, optional): The name of the BFRES file, used to detect type when there is no path.
-            Defaults to empty string.
+        be (bool): Big-Endian (True) or Little-Endian (False)
+        name (Optional[str]): The name of the BFRES file, used to detect type when there is no path.
 
     Raises:
         ValueError: Raises error if BFRES name is blank when passing file as bytes
@@ -20,95 +184,28 @@ def guess_bfres_size(file: Union[Path, bytes], name: str = '') -> int:
         int: Return an estimated RSTB value
     """
     if isinstance(file, bytes):
-        if file[0:4] == b'Yaz0':
-            real_size = yaz0.get_header(memoryview(file[0:16])).uncompressed_size
-        else:
-            real_size = len(file)
-        del file
+        real_size = yaz0.get_header(file[0:16]).uncompressed_size if file[:4] == b"Yaz0" else len(file)
+    elif isinstance(file, Path):
+        name = file.name if not name else name
+        with file.open('rb') as f:
+            chunk = f.read(16)
+            real_size = yaz0.get_header(chunk).uncompressed_size if chunk[:4] == b"Yaz0" else file.stat().st_size
     else:
-        if file.suffix.startswith('.s'):
-            with file.open('rb') as opened:
-                real_size = yaz0.get_header(opened.read(16)).uncompressed_size
-        else:
-            real_size = file.stat().st_size
-    if name == '':
-        if isinstance(file, Path):
-            name = file.name
-        else:
-            raise ValueError('BFRES name must not be blank if passing file as bytes.')
-    if '.Tex' in name:
-        if real_size < 100:
-            return real_size * 10
-        elif 100 < real_size <= 1500:
-            return real_size * 9
-        elif 1500 < real_size <= 2000:
-            return real_size * 7
-        elif 2000 < real_size <= 3000:
-            return real_size * 5
-        elif 3000 < real_size <= 4000:
-            return real_size * 4
-        elif 4000 < real_size <= 8500:
-            return real_size * 3
-        elif 8500 < real_size <= 12000:
-            return real_size * 2
-        elif 12000 < real_size <= 17000:
-            return int(real_size * 1.75)
-        elif 17000 < real_size <= 30000:
-            return int(real_size * 1.5)
-        elif 30000 < real_size <= 45000:
-            return int(real_size * 1.3)
-        elif 45000 < real_size <= 100000:
-            return int(real_size * 1.2)
-        elif 100000 < real_size <= 150000:
-            return int(real_size * 1.1)
-        elif 150000 < real_size <= 200000:
-            return int(real_size * 1.07)
-        elif 200000 < real_size <= 250000:
-            return int(real_size * 1.045)
-        elif 250000 < real_size <= 300000:
-            return int(real_size * 1.035)
-        elif 300000 < real_size <= 600000:
-            return int(real_size * 1.03)
-        elif 600000 < real_size <= 1000000:
-            return int(real_size * 1.015)
-        elif 1000000 < real_size <= 1800000:
-            return int(real_size * 1.009)
-        elif 1800000 < real_size <= 4500000:
-            return int(real_size * 1.005)
-        elif 4500000 < real_size <= 6000000:
-            return int(real_size * 1.002)
-        else:
-            return int(real_size * 1.0015)
-    else:
-        if real_size < 500:
-            return real_size * 7
-        elif 500 < real_size <= 750:
-            return real_size * 5
-        elif 750 < real_size <= 1250:
-            return real_size * 4
-        elif 1250 < real_size <= 2000:
-            return int(real_size * 3.5)
-        elif 2000 < real_size <= 400000:
-            return int(real_size * 2.25)
-        elif 400000 < real_size <= 600000:
-            return int(real_size * 2.1)
-        elif 600000 < real_size <= 1000000:
-            return int(real_size * 1.95)
-        elif 1000000 < real_size <= 1500000:
-            return int(real_size * 1.85)
-        elif 1500000 < real_size <= 3000000:
-            return int(real_size * 1.66)
-        else:
-            return int(real_size * 1.45)
+        raise NotImplementedError()
+
+    if not name:
+        raise ValueError('BFRES name must not be blank if passing file as bytes.')
+
+    return int(BfresSizeGuesser.guess(be, ".Tex" in name, real_size))
 
 
-def guess_aamp_size(file: Union[Path, bytes], ext: str = '') -> int:
+def guess_aamp_size(file: Union[Path, bytes], be: bool, ext: Optional[str]) -> int:
     """Attempts to estimate a valid RSTB value for an AAMP file. Decompresses first if yaz0 encoded.
 
     Args:
         file (Union[Path, bytes]): The file to analyze, either as a Path or bytes.
-        ext (str, optional): The extension of the AAMP file, used to detect type when there is no
-            path. Defaults to empty string.
+        be (bool): Big-Endian (True) or Little-Endian (False)
+        ext (Optional[str]): The extension of the AAMP file, used to detect type when there is no path.
 
     Raises:
         ValueError: Raises error if extension is blank when passing file as bytes
@@ -117,135 +214,16 @@ def guess_aamp_size(file: Union[Path, bytes], ext: str = '') -> int:
         int: Returns an estimated RSTB value, or 0 for unsupported AAMP types.
     """
     if isinstance(file, bytes):
-        real_size = len(file)
-        del file
+        real_size = yaz0.get_header(file[0:16]).uncompressed_size if file[:4] == b"Yaz0" else len(file)
+    elif isinstance(file, Path):
+        ext = file.name if not ext else ext
+        with file.open('rb') as f:
+            chunk = f.read(16)
+            real_size = yaz0.get_header(chunk).uncompressed_size if chunk[:4] == b"Yaz0" else file.stat().st_size
     else:
-        if file.suffix.startswith('.s'):
-            with file.open('rb') as opened:
-                real_size = yaz0.get_header(opened.read(16)).uncompressed_size
-        else:
-            real_size = file.stat().st_size
-    real_size = int(real_size * 1.05)
-    if ext == '':
-        if isinstance(file, Path):
-            ext = file.suffix
-        else:
-            raise ValueError('AAMP extension must not be blank if passing file as bytes.')
-    ext = ext.replace('.s', '.')
-    if ext == '.baiprog':
-        if real_size <= 380:
-            return real_size * 7
-        elif 380 < real_size <= 400:
-            return real_size * 6
-        elif 400 < real_size <= 450:
-            return int(real_size * 5.75)
-        elif 450 < real_size <= 600:
-            return int(real_size * 5.25)
-        elif 600 < real_size <= 1000:
-            return int(real_size * 4.5)
-        elif 1000 < real_size <= 1750:
-            return int(real_size * 3.5)
-        else:
-            return real_size * 3
-    elif ext == '.bgparamlist':
-        if real_size <= 100:
-            return real_size * 20
-        elif 100 < real_size <= 150:
-            return real_size * 12
-        elif 150 < real_size <= 250:
-            return real_size * 10
-        elif 250 < real_size <= 350:
-            return real_size * 8
-        elif 350 < real_size <= 450:
-            return real_size * 7
-        else:
-            return real_size * 6
-    elif ext == '.bdrop':
-        if real_size < 150:
-            return max(1024, int(real_size * 10))
-        elif 150 < real_size <= 200:
-            return int(real_size * 8.5)
-        elif 200 < real_size <= 250:
-            return real_size * 7
-        elif 250 < real_size <= 350:
-            return real_size * 6
-        elif 350 < real_size <= 450:
-            return int(real_size * 5.75)
-        elif 450 < real_size <= 600:
-            return int(real_size * 5.5)
-        elif 600 < real_size <= 850:
-            return int(real_size * 5.25)
-        else:
-            return int(real_size * 4.667)
-    elif ext == '.bxml':
-        if real_size < 350:
-            return real_size * 7
-        elif 350 < real_size <= 450:
-            return real_size * 6
-        elif 450 < real_size <= 550:
-            return int(real_size * 4.5)
-        elif 550 < real_size <= 650:
-            return real_size * 4
-        elif 650 < real_size <= 800:
-            return int(real_size * 3.5)
-        else:
-            return real_size * 3
-    elif ext == '.brecipe':
-        if real_size < 100:
-            return int(real_size * 12.5)
-        elif 100 < real_size <= 160:
-            return int(real_size * 8.5)
-        elif 160 < real_size <= 200:
-            return int(real_size * 7.5)
-        elif 200 < real_size <= 215:
-            return real_size * 7
-        else:
-            return int(real_size * 6.5)
-    elif ext == '.bshop':
-        if real_size < 150:
-            return max(1024, int(real_size * 10))
-        elif 150 < real_size <= 200:
-            return int(real_size * 7.5)
-        elif 200 < real_size <= 400:
-            return int(real_size * 7)
-        elif 400 < real_size <= 500:
-            return int(real_size * 6)
-        else:
-            return int(real_size * 5)
-    elif ext == '.bas':
-        if real_size < 100:
-            return real_size * 20
-        elif 100 < real_size <= 200:
-            return int(real_size * 12.5)
-        elif 200 < real_size <= 300:
-            return real_size * 10
-        elif 300 < real_size <= 600:
-            return real_size * 8
-        elif 600 < real_size <= 1500:
-            return real_size * 6
-        elif 1500 < real_size <= 2000:
-            return int(real_size * 5.75)
-        elif 2000 < real_size <= 15000:
-            return int(real_size * 5.5)
-        else:
-            return int(real_size * 5)
-    elif ext == '.baslist':
-        real_size = int(1.05 * real_size)
-        if real_size < 100:
-            return real_size * 15
-        elif 100 < real_size <= 200:
-            return real_size * 10
-        elif 200 < real_size <= 300:
-            return real_size * 8
-        elif 300 < real_size <= 500:
-            return real_size * 6
-        elif 500 < real_size <= 800:
-            return real_size * 5
-        elif 800 < real_size <= 4000:
-            return real_size * 4
-        else:
-            return int(real_size * 3.5)
-    elif ext == '.bdmgparam':
-        return int(((-0.0018 * real_size) + 6.6273) * real_size) + 500
-    else:
-        return 0
+        raise NotImplementedError()
+
+    if not ext:
+        raise ValueError('AAMP extension must not be blank if passing file as bytes.')
+
+    return int(AampSizeGuesser.guess(be, ext, real_size))
