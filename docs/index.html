@@ -31,7 +31,7 @@ import os
 from pathlib import Path
 from typing import Union
 
-DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__))) / &#39;data&#39;
+DATA_DIR = Path(os.path.dirname(os.path.realpath(__file__))) / &#34;data&#34;
 
 
 def get_canon_name(path: Union[str, Path], no_root: bool = False) -&gt; str:
@@ -53,30 +53,29 @@ def get_canon_name(path: Union[str, Path], no_root: bool = False) -&gt; str:
     &#34;&#34;&#34;
     if isinstance(path, Path):
         path = str(path)
-    name = (path.replace(&#39;\\&#39;, &#39;/&#39;)
-                .replace(&#39;Content&#39;, &#39;content&#39;)
-                .replace(&#39;Aoc&#39;, &#39;aoc&#39;)
-                .replace(&#39;atmosphere/titles/&#39;, &#39;&#39;)
-                .replace(&#39;atmosphere/contents/&#39;, &#39;&#39;)
-                .replace(&#39;01007EF00011E000/romfs&#39;, &#39;content&#39;)
-                .replace(&#39;01007EF00011E001/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;01007EF00011E002/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;01007EF00011F001/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;01007EF00011F002/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;romfs&#39;, &#39;content&#39;)
-                .replace(&#39;.s&#39;, &#39;.&#39;))
-    if name.startswith(&#39;aoc/&#39;):
-        return (name.replace(&#39;aoc/content&#39;, &#39;Aoc&#39;)
-                    .replace(&#39;aoc&#39;, &#39;Aoc&#39;))
-    elif name.startswith(&#39;content/&#39;) and &#39;/aoc&#39; not in name:
-        return name.replace(&#39;content/&#39;, &#39;&#39;)
+    name = (
+        path.replace(&#34;\\&#34;, &#34;/&#34;)
+        .replace(&#34;Content&#34;, &#34;content&#34;)
+        .replace(&#34;Aoc&#34;, &#34;aoc&#34;)
+        .replace(&#34;atmosphere/titles/&#34;, &#34;&#34;)
+        .replace(&#34;atmosphere/contents/&#34;, &#34;&#34;)
+        .replace(&#34;01007EF00011E000/romfs&#34;, &#34;content&#34;)
+        .replace(&#34;01007EF00011E001/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;01007EF00011E002/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;01007EF00011F001/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;01007EF00011F002/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;romfs&#34;, &#34;content&#34;)
+        .replace(&#34;.s&#34;, &#34;.&#34;)
+    )
+    if name.startswith(&#34;aoc/&#34;):
+        return name.replace(&#34;aoc/content&#34;, &#34;Aoc&#34;).replace(&#34;aoc&#34;, &#34;Aoc&#34;)
+    elif name.startswith(&#34;content/&#34;) and &#34;/aoc&#34; not in name:
+        return name.replace(&#34;content/&#34;, &#34;&#34;)
     else:
         if no_root:
             return name
         else:
-            raise ValueError(
-                f&#39;{name} does not appear to be a canonical BOTW path&#39;
-            )</code></pre>
+            raise ValueError(f&#34;{name} does not appear to be a canonical BOTW path&#34;)</code></pre>
 </details>
 </section>
 <section>
@@ -150,30 +149,29 @@ recognized game folder. This is necessary for paths inside SARCs. Defaults to Fa
     &#34;&#34;&#34;
     if isinstance(path, Path):
         path = str(path)
-    name = (path.replace(&#39;\\&#39;, &#39;/&#39;)
-                .replace(&#39;Content&#39;, &#39;content&#39;)
-                .replace(&#39;Aoc&#39;, &#39;aoc&#39;)
-                .replace(&#39;atmosphere/titles/&#39;, &#39;&#39;)
-                .replace(&#39;atmosphere/contents/&#39;, &#39;&#39;)
-                .replace(&#39;01007EF00011E000/romfs&#39;, &#39;content&#39;)
-                .replace(&#39;01007EF00011E001/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;01007EF00011E002/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;01007EF00011F001/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;01007EF00011F002/romfs&#39;, &#39;aoc/0010&#39;)
-                .replace(&#39;romfs&#39;, &#39;content&#39;)
-                .replace(&#39;.s&#39;, &#39;.&#39;))
-    if name.startswith(&#39;aoc/&#39;):
-        return (name.replace(&#39;aoc/content&#39;, &#39;Aoc&#39;)
-                    .replace(&#39;aoc&#39;, &#39;Aoc&#39;))
-    elif name.startswith(&#39;content/&#39;) and &#39;/aoc&#39; not in name:
-        return name.replace(&#39;content/&#39;, &#39;&#39;)
+    name = (
+        path.replace(&#34;\\&#34;, &#34;/&#34;)
+        .replace(&#34;Content&#34;, &#34;content&#34;)
+        .replace(&#34;Aoc&#34;, &#34;aoc&#34;)
+        .replace(&#34;atmosphere/titles/&#34;, &#34;&#34;)
+        .replace(&#34;atmosphere/contents/&#34;, &#34;&#34;)
+        .replace(&#34;01007EF00011E000/romfs&#34;, &#34;content&#34;)
+        .replace(&#34;01007EF00011E001/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;01007EF00011E002/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;01007EF00011F001/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;01007EF00011F002/romfs&#34;, &#34;aoc/0010&#34;)
+        .replace(&#34;romfs&#34;, &#34;content&#34;)
+        .replace(&#34;.s&#34;, &#34;.&#34;)
+    )
+    if name.startswith(&#34;aoc/&#34;):
+        return name.replace(&#34;aoc/content&#34;, &#34;Aoc&#34;).replace(&#34;aoc&#34;, &#34;Aoc&#34;)
+    elif name.startswith(&#34;content/&#34;) and &#34;/aoc&#34; not in name:
+        return name.replace(&#34;content/&#34;, &#34;&#34;)
     else:
         if no_root:
             return name
         else:
-            raise ValueError(
-                f&#39;{name} does not appear to be a canonical BOTW path&#39;
-            )</code></pre>
+            raise ValueError(f&#34;{name} does not appear to be a canonical BOTW path&#34;)</code></pre>
 </details>
 </dd>
 </dl>
