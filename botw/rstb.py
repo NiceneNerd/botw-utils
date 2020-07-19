@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 from typing import Union, Optional
 
+import oead
 from oead import yaz0
 
 
@@ -68,7 +69,7 @@ class BfresSizeGuesser:
 
     @classmethod
     def guess(cls, be: bool, tex: bool, size: int):
-        size *= 1.05
+        size = int(size * 1.05)
 
         for k, v in cls.multiplier_map[be][tex].items():
             if size in k:
@@ -151,6 +152,8 @@ class AampSizeGuesser:
         if ext == ".bas":
             size *= 1.05  # I guess?
 
+        size = int(size)
+
         if ext in cls.multiplier_map:
             for k, v in cls.multiplier_map[ext].items():
                 if size in k:
@@ -185,7 +188,7 @@ def guess_bfres_size(file: Union[Path, bytes], be: bool, name: Optional[str]) ->
     Returns:
         int: Return an estimated RSTB value
     """
-    if isinstance(file, bytes):
+    if isinstance(file, bytes) or isinstance(file, memoryview) or isinstance(file, oead.Bytes):
         real_size = (
             yaz0.get_header(file[0:16]).uncompressed_size
             if file[:4] == b"Yaz0"
@@ -202,7 +205,6 @@ def guess_bfres_size(file: Union[Path, bytes], be: bool, name: Optional[str]) ->
             )
     else:
         raise NotImplementedError()
-
     if not name:
         raise ValueError("BFRES name must not be blank if passing file as bytes.")
 
@@ -223,7 +225,7 @@ def guess_aamp_size(file: Union[Path, bytes], be: bool, ext: Optional[str]) -> i
     Returns:
         int: Returns an estimated RSTB value, or 0 for unsupported AAMP types.
     """
-    if isinstance(file, bytes):
+    if isinstance(file, bytes) or isinstance(file, memoryview) or isinstance(file, oead.Bytes):
         real_size = (
             yaz0.get_header(file[0:16]).uncompressed_size
             if file[:4] == b"Yaz0"
