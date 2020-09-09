@@ -62,7 +62,7 @@ class BfresSizeGuesser:
                 range(800_000, 2_000_000): 3.15,
                 range(2_000_000, 3_000_000): 2.5,
                 range(3_000_000, 4_000_000): 1.667,
-                range(4_000_000, sys.maxsize): 1.5,
+                range(4_000_000, sys.maxsize): 1.6,
             },
         },
     }
